@@ -9,15 +9,34 @@ function App() {
   const [poem, setPoem] = useState('');
   const [analysis, setAnalysis] = useState('');
 
+  const wordCount = poem.trim().split(/\s+/).length;
+
   useEffect(() => {
     fetch(`${Env.API_BASE_URL}/ping`)
       .then(response => response.text())
       .then(body => console.log(body));
   }, []);
 
-  const handleSubmit = () => {
-    // Placeholder for actual analysis logic
-    setAnalysis('Lorem ipsum dolor sit amet, consectetur adipiscing elit.');
+  const handleSubmit = async () => {
+    try {
+      const response = await fetch(`${Env.API_BASE_URL}/poem`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: poem }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const poemAnalysis = await response.json();
+      setAnalysis(poemAnalysis.data);
+    } catch (error) {
+      console.error('Error:', error);
+      setAnalysis('Failed to analyze the poem.');
+    }
   };
 
   return (
@@ -32,7 +51,11 @@ function App() {
           cols={50}
         />
         <br />
-        <button onClick={handleSubmit} className="bg-red-500 text-black px-4 py-2 rounded">Submit</button>
+        <button 
+        onClick={handleSubmit} 
+        className="bg-red-500 text-black px-4 py-2 rounded"
+        disabled={wordCount < 10}
+        >Submit</button>
         <br />
         <textarea
           value={analysis}
